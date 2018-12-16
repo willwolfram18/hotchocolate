@@ -1,13 +1,21 @@
-#if !ASPNETCLASSIC
-
 using System;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 using HotChocolate.Execution;
-using Microsoft.AspNetCore.Http;
 
+#if ASPNETCLASSIC
+using Microsoft.Owin;
+using HttpContext = Microsoft.Owin.IOwinContext;
+#else
+using Microsoft.AspNetCore.Http;
+#endif
+
+#if ASPNETCLASSIC
+namespace HotChocolate.AspNetClassic.Subscriptions
+#else
 namespace HotChocolate.AspNetCore.Subscriptions
+#endif
 {
     // TODO : Hanlde close status
     internal sealed class WebSocketSession
@@ -154,5 +162,3 @@ namespace HotChocolate.AspNetCore.Subscriptions
         }
     }
 }
-
-#endif

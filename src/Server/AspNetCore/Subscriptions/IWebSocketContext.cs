@@ -1,5 +1,3 @@
-#if !ASPNETCLASSIC
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,9 +5,19 @@ using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 using HotChocolate.Execution;
-using Microsoft.AspNetCore.Http;
 
+#if ASPNETCLASSIC
+using Microsoft.Owin;
+using HttpContext = Microsoft.Owin.IOwinContext;
+#else
+using Microsoft.AspNetCore.Http;
+#endif
+
+#if ASPNETCLASSIC
+namespace HotChocolate.AspNetClassic.Subscriptions
+#else
 namespace HotChocolate.AspNetCore.Subscriptions
+#endif
 {
     internal interface IWebSocketContext
         : IDisposable
@@ -42,5 +50,3 @@ namespace HotChocolate.AspNetCore.Subscriptions
         Task CloseAsync();
     }
 }
-
-#endif

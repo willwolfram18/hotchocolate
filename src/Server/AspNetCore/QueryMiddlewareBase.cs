@@ -82,7 +82,6 @@ namespace HotChocolate.AspNetCore
 
         protected IServiceProvider Services { get; }
 
-
 #if ASPNETCLASSIC
         /// <inheritdoc />
         public override async Task Invoke(HttpContext context)
@@ -111,7 +110,11 @@ namespace HotChocolate.AspNetCore
             }
             else if (Next != null)
             {
+#if ASPNETCLASSIC
                 await Next.Invoke(context).ConfigureAwait(false);
+#else
+                await Next(context).ConfigureAwait(false);
+#endif
             }
         }
 

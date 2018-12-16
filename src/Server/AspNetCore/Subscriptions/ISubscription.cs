@@ -1,8 +1,10 @@
-#if !ASPNETCLASSIC
-
 using System;
 
+#if ASPNETCLASSIC
+namespace HotChocolate.AspNetClassic.Subscriptions
+#else
 namespace HotChocolate.AspNetCore.Subscriptions
+#endif
 {
     internal interface ISubscription
         : IDisposable
@@ -12,5 +14,3 @@ namespace HotChocolate.AspNetCore.Subscriptions
         string Id { get; }
     }
 }
-
-#endif

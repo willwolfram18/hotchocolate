@@ -1,6 +1,8 @@
-#if !ASPNETCLASSIC
-
+#if ASPNETCLASSIC
+namespace HotChocolate.AspNetClassic.Subscriptions
+#else
 namespace HotChocolate.AspNetCore.Subscriptions
+#endif
 {
     internal static class MessageTypes
     {
@@ -23,5 +25,3 @@ namespace HotChocolate.AspNetCore.Subscriptions
         }
     }
 }
-
-#endif

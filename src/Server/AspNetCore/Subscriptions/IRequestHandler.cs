@@ -1,9 +1,11 @@
-#if !ASPNETCLASSIC
-
 using System.Threading;
 using System.Threading.Tasks;
 
+#if ASPNETCLASSIC
+namespace HotChocolate.AspNetClassic.Subscriptions
+#else
 namespace HotChocolate.AspNetCore.Subscriptions
+#endif
 {
     internal interface IRequestHandler
     {
@@ -15,5 +17,3 @@ namespace HotChocolate.AspNetCore.Subscriptions
         bool CanHandle(GenericOperationMessage message);
     }
 }
-
-#endif

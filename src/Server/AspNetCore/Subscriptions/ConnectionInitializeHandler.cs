@@ -1,9 +1,11 @@
-#if !ASPNETCLASSIC
-
 using System.Threading;
 using System.Threading.Tasks;
 
+#if ASPNETCLASSIC
+namespace HotChocolate.AspNetClassic.Subscriptions
+#else
 namespace HotChocolate.AspNetCore.Subscriptions
+#endif
 {
     /// <summary>
     /// The server may responses with this message to the
@@ -44,5 +46,3 @@ namespace HotChocolate.AspNetCore.Subscriptions
         }
     }
 }
-
-#endif

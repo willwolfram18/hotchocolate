@@ -1,11 +1,13 @@
-#if !ASPNETCLASSIC
-
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using HotChocolate.Execution;
 
+#if ASPNETCLASSIC
+namespace HotChocolate.AspNetClassic.Subscriptions
+#else
 namespace HotChocolate.AspNetCore.Subscriptions
+#endif
 {
     internal class Subscription
         : ISubscription
@@ -71,5 +73,3 @@ namespace HotChocolate.AspNetCore.Subscriptions
         }
     }
 }
-
-#endif

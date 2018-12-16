@@ -1,5 +1,3 @@
-#if !ASPNETCLASSIC
-
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -9,19 +7,29 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using HotChocolate.Execution;
-using Microsoft.AspNetCore.Http;
 
+#if ASPNETCLASSIC
+using Microsoft.Owin;
+using HttpContext = Microsoft.Owin.IOwinContext;
+#else
+using Microsoft.AspNetCore.Http;
+#endif
+
+#if ASPNETCLASSIC
+namespace HotChocolate.AspNetClassic.Subscriptions
+#else
 namespace HotChocolate.AspNetCore.Subscriptions
+#endif
 {
     internal class WebSocketContext
         : IWebSocketContext
     {
+        private bool _disposed;
         private const int _maxMessageSize = 1024 * 4;
-        private readonly ConcurrentDictionary<string, ISubscription> _subscriptions =
-            new ConcurrentDictionary<string, ISubscription>();
         private readonly OnConnectWebSocketAsync _onConnectAsync;
         private readonly OnCreateRequestAsync _onCreateRequest;
-        private bool _disposed;
+        private readonly ConcurrentDictionary<string, ISubscription> _subscriptions =
+            new ConcurrentDictionary<string, ISubscription>();
 
         public WebSocketContext(
             HttpContext httpContext,
@@ -100,7 +108,7 @@ namespace HotChocolate.AspNetCore.Subscriptions
             {
                 await _onCreateRequest(
                     HttpContext, request, properties,
-                    HttpContext.RequestAborted);
+                    HttpContext.GetCancellationToken());
             }
         }
 
@@ -114,12 +122,15 @@ namespace HotChocolate.AspNetCore.Subscriptions
             do
             {
                 read = messageStream.Read(buffer, 0, buffer.Length);
+
                 var segment = new ArraySegment<byte>(buffer, 0, read);
                 var isEOF = messageStream.Position == messageStream.Length;
 
                 await WebSocket.SendAsync(
-                    segment, WebSocketMessageType.Text,
-                    isEOF, cancellationToken);
+                    segment,
+                    WebSocketMessageType.Text,
+                    isEOF,
+                    cancellationToken);
             } while (read == _maxMessageSize);
         }
 
@@ -135,7 +146,6 @@ namespace HotChocolate.AspNetCore.Subscriptions
                 result = await WebSocket.ReceiveAsync(
                     new ArraySegment<byte>(buffer),
                     cancellationToken);
-
                 await messageStream.WriteAsync(
                     buffer, 0, result.Count,
                     cancellationToken);
@@ -147,7 +157,7 @@ namespace HotChocolate.AspNetCore.Subscriptions
             IDictionary<string, object> properties)
         {
             RequestProperties = properties ?? new Dictionary<string, object>();
-            RequestProperties[nameof(ClaimsIdentity)] = HttpContext.User;
+            RequestProperties[nameof(ClaimsIdentity)] = HttpContext.GetUser();
 
             if (_onConnectAsync == null)
             {
@@ -157,7 +167,7 @@ namespace HotChocolate.AspNetCore.Subscriptions
             return await _onConnectAsync(
                 HttpContext,
                 RequestProperties,
-                HttpContext.RequestAborted);
+                HttpContext.GetCancellationToken());
         }
 
         public async Task CloseAsync()
@@ -194,5 +204,3 @@ namespace HotChocolate.AspNetCore.Subscriptions
         }
     }
 }
-
-#endif

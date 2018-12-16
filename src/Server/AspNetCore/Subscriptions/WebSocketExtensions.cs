@@ -1,5 +1,3 @@
-#if !ASPNETCLASSIC
-
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -9,7 +7,11 @@ using HotChocolate.Execution;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
+#if ASPNETCLASSIC
+namespace HotChocolate.AspNetClassic.Subscriptions
+#else
 namespace HotChocolate.AspNetCore.Subscriptions
+#endif
 {
     internal static class WebSocketExtensions
     {
@@ -154,5 +156,3 @@ namespace HotChocolate.AspNetCore.Subscriptions
         }
     }
 }
-
-#endif

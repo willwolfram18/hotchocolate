@@ -1,10 +1,12 @@
-#if !ASPNETCLASSIC
-
 using System.Threading;
 using System.Threading.Tasks;
 using HotChocolate.Execution;
 
+#if ASPNETCLASSIC
+namespace HotChocolate.AspNetClassic.Subscriptions
+#else
 namespace HotChocolate.AspNetCore.Subscriptions
+#endif
 {
     internal sealed class SubscriptionStartHandler
         : IRequestHandler
@@ -25,7 +27,12 @@ namespace HotChocolate.AspNetCore.Subscriptions
             {
                 VariableValues = QueryMiddlewareUtilities
                     .ToDictionary(payload.Variables),
+#if ASPNETCLASSIC
+                Services = context.HttpContext.CreateRequestServices(
+                    context.QueryExecuter.Schema.Services)
+#else
                 Services = context.HttpContext.CreateRequestServices()
+#endif
             };
 
             await context.PrepareRequestAsync(request)
@@ -53,5 +60,3 @@ namespace HotChocolate.AspNetCore.Subscriptions
         }
     }
 }
-
-#endif

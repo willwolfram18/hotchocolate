@@ -1,6 +1,8 @@
-#if !ASPNETCLASSIC
-
+#if ASPNETCLASSIC
+namespace HotChocolate.AspNetClassic.Subscriptions
+#else
 namespace HotChocolate.AspNetCore.Subscriptions
+#endif
 {
     internal class OperationMessage
     {
@@ -9,5 +11,3 @@ namespace HotChocolate.AspNetCore.Subscriptions
         public string Type { get; set; }
     }
 }
-
-#endif

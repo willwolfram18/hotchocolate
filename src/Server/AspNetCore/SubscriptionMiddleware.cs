@@ -1,14 +1,26 @@
-#if !ASPNETCLASSIC
-
 using System;
 using System.Threading.Tasks;
-using HotChocolate.AspNetCore.Subscriptions;
 using HotChocolate.Execution;
-using Microsoft.AspNetCore.Http;
 
+#if ASPNETCLASSIC
+using HotChocolate.AspNetClassic.Subscriptions;
+using HttpContext = Microsoft.Owin.IOwinContext;
+using RequestDelegate = Microsoft.Owin.OwinMiddleware;
+#else
+using HotChocolate.AspNetCore.Subscriptions;
+using Microsoft.AspNetCore.Http;
+#endif
+
+#if ASPNETCLASSIC
+namespace HotChocolate.AspNetClassic
+#else
 namespace HotChocolate.AspNetCore
+#endif
 {
     public class SubscriptionMiddleware
+#if ASPNETCLASSIC
+        : RequestDelegate
+#endif
     {
         private readonly RequestDelegate _next;
 
@@ -16,9 +28,13 @@ namespace HotChocolate.AspNetCore
             RequestDelegate next,
             IQueryExecuter queryExecuter,
             QueryMiddlewareOptions options)
+#if ASPNETCLASSIC
+                : base(next)
+#endif
         {
-            _next = next
-                ?? throw new ArgumentNullException(nameof(next));
+#if !ASPNETCLASSIC
+            Next = next;
+#endif
             Executer = queryExecuter
                 ?? throw new ArgumentNullException(nameof(queryExecuter));
             Options = options
@@ -27,9 +43,23 @@ namespace HotChocolate.AspNetCore
 
         protected IQueryExecuter Executer { get; }
 
+#if !ASPNETCLASSIC
+        protected RequestDelegate Next { get; }
+#endif
+
         protected QueryMiddlewareOptions Options { get; }
 
+#if ASPNETCLASSIC
+        /// <inheritdoc />
+        public override async Task Invoke(HttpContext context)
+#else
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
         public async Task InvokeAsync(HttpContext context)
+#endif
         {
             if (context.WebSockets.IsWebSocketRequest
                 && context.IsValidPath(Options.SubscriptionPath))
@@ -45,19 +75,35 @@ namespace HotChocolate.AspNetCore
 
                 if (session != null)
                 {
-                    await session.StartAsync(context.RequestAborted)
+                    await session.StartAsync(context.GetCancellationToken())
                         .ConfigureAwait(false);
                 }
             }
-            else
+            else if (Next != null)
             {
-                await _next(context).ConfigureAwait(false);
+#if ASPNETCLASSIC
+                await Next.Invoke(context).ConfigureAwait(false);
+#else
+                await Next(context).ConfigureAwait(false);
+#endif
             }
         }
 
+#if ASPNETCLASSIC
+        protected T GetService<T>(HttpContext context)
+        {
+            if (context.Environment.TryGetValue(
+                EnvironmentKeys.ServiceProvider,
+                out var value) && value is IServiceProvider serviceProvider)
+            {
+                return (T)serviceProvider.GetService(typeof(T));
+            }
+
+            return default;
+        }
+#else
         protected T GetService<T>(HttpContext context) =>
             (T)context.RequestServices.GetService(typeof(T));
+#endif
     }
 }
-
-#endif

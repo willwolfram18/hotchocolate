@@ -1,9 +1,11 @@
-#if !ASPNETCLASSIC
-
 using System.Threading;
 using System.Threading.Tasks;
 
+#if ASPNETCLASSIC
+namespace HotChocolate.AspNetClassic.Subscriptions
+#else
 namespace HotChocolate.AspNetCore.Subscriptions
+#endif
 {
     internal sealed class ConnectionTerminateHandler
         : IRequestHandler
@@ -22,5 +24,3 @@ namespace HotChocolate.AspNetCore.Subscriptions
         }
     }
 }
-
-#endif
