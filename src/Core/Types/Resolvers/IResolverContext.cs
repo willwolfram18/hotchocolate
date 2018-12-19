@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading;
@@ -48,7 +48,7 @@ namespace HotChocolate.Resolvers
         /// Gets the source stack containing all previous resolver results
         /// of the current execution path.
         /// </summary>
-        ImmutableStack<object> Source { get; }
+        IImmutableStack<object> Source { get; }
 
         /// <summary>
         /// Gets the current execution path.

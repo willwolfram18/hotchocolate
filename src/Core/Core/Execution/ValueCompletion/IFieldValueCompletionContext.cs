@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using HotChocolate.Language;
@@ -16,7 +16,7 @@ namespace HotChocolate.Execution
 
         ITypeConversion Converter { get; }
 
-        ImmutableStack<object> Source { get; }
+        IImmutableStack<object> Source { get; }
 
         FieldSelection Selection { get; }
 
