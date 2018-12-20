@@ -22,8 +22,6 @@ namespace HotChocolate.AspNetCore
         : RequestDelegate
 #endif
     {
-        private readonly RequestDelegate _next;
-
         public SubscriptionMiddleware(
             RequestDelegate next,
             IQueryExecuter queryExecuter,
@@ -35,19 +33,19 @@ namespace HotChocolate.AspNetCore
 #if !ASPNETCLASSIC
             Next = next;
 #endif
-            Executer = queryExecuter
-                ?? throw new ArgumentNullException(nameof(queryExecuter));
-            Options = options
-                ?? throw new ArgumentNullException(nameof(options));
+            QueryExecuter = queryExecuter ??
+                throw new ArgumentNullException(nameof(queryExecuter));
+            Options = options ??
+                throw new ArgumentNullException(nameof(options));
         }
-
-        protected IQueryExecuter Executer { get; }
 
 #if !ASPNETCLASSIC
         protected RequestDelegate Next { get; }
 #endif
 
         protected QueryMiddlewareOptions Options { get; }
+
+        protected IQueryExecuter QueryExecuter { get; }
 
 #if ASPNETCLASSIC
         /// <inheritdoc />
@@ -61,31 +59,34 @@ namespace HotChocolate.AspNetCore
         public async Task InvokeAsync(HttpContext context)
 #endif
         {
-            if (context.WebSockets.IsWebSocketRequest
-                && context.IsValidPath(Options.SubscriptionPath))
+            if (context.IsWebSocketRequest() &&
+                context.IsValidPath(Options.SubscriptionPath))
             {
-                OnConnectWebSocketAsync onConnect = Options.OnConnectWebSocket
-                    ?? GetService<OnConnectWebSocketAsync>(context);
-                OnCreateRequestAsync onRequest = Options.OnCreateRequest
-                    ?? GetService<OnCreateRequestAsync>(context);
+                OnConnectWebSocketAsync onConnect =
+                    Options.OnConnectWebSocket ??
+                    GetService<OnConnectWebSocketAsync>(context);
+                OnCreateRequestAsync onRequest =
+                    Options.OnCreateRequest ??
+                    GetService<OnCreateRequestAsync>(context);
 
                 WebSocketSession session = await WebSocketSession
-                    .TryCreateAsync(context, Executer, onConnect, onRequest)
+                    .TryCreateAsync(
+                        context,
+                        QueryExecuter,
+                        onConnect,
+                        onRequest)
                     .ConfigureAwait(false);
 
                 if (session != null)
                 {
-                    await session.StartAsync(context.GetCancellationToken())
+                    await session
+                        .StartAsync(context.GetCancellationToken())
                         .ConfigureAwait(false);
                 }
             }
-            else if (Next != null)
+            else
             {
-#if ASPNETCLASSIC
                 await Next.Invoke(context).ConfigureAwait(false);
-#else
-                await Next(context).ConfigureAwait(false);
-#endif
             }
         }
 
@@ -93,8 +94,8 @@ namespace HotChocolate.AspNetCore
         protected T GetService<T>(HttpContext context)
         {
             if (context.Environment.TryGetValue(
-                EnvironmentKeys.ServiceProvider,
-                out var value) && value is IServiceProvider serviceProvider)
+                EnvironmentKeys.ServiceProvider, out var value) &&
+                    value is IServiceProvider serviceProvider)
             {
                 return (T)serviceProvider.GetService(typeof(T));
             }

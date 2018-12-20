@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.WebSockets;
 using System.Security.Principal;
 using System.Threading;
+using System.Threading.Tasks;
 
 #if ASPNETCLASSIC
 using Microsoft.Owin;
 using HttpContext = Microsoft.Owin.IOwinContext;
+using WebSocketAccept = System.Action<System.Collections.Generic.IDictionary<string, object>,
+    System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>>;
 #else
 using Microsoft.AspNetCore.Http;
 #endif
@@ -18,6 +22,30 @@ namespace HotChocolate.AspNetCore
 {
     internal static class HttpContextExtensions
     {
+#if ASPNETCLASSIC
+        private const string _webSocketAccept = "websocket.Accept";
+#endif
+
+        public static Task<WebSocket> AcceptWebSocketAsync(
+            this HttpContext context,
+            string subProtocol)
+        {
+#if ASPNETCLASSIC
+            var acceptDictionary = new Dictionary<string, object>
+            {
+                { "websocket.SubProtocol", subProtocol }
+            };
+            WebSocketAccept accept = context.Get<WebSocketAccept>(
+                _webSocketAccept);
+
+            accept(acceptDictionary, )
+
+                WebSocket.
+#else
+            return context.WebSockets.AcceptWebSocketAsync(subProtocol);
+#endif
+        }
+
 #if ASPNETCLASSIC
         public static IServiceProvider CreateRequestServices(
             this HttpContext context,
@@ -75,6 +103,16 @@ namespace HotChocolate.AspNetCore
             PathString path)
         {
             return context.Request.Path.StartsWithSegments(path);
+        }
+
+        public static bool IsWebSocketRequest(
+            this HttpContext context)
+        {
+#if ASPNETCLASSIC
+            return context.Get<WebSocketAccept>("websocket.Accept") != null;
+#else
+            return context.WebSockets.IsWebSocketRequest;
+#endif
         }
     }
 }

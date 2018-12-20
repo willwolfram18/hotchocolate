@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using HotChocolate.Execution;
 
 #if ASPNETCLASSIC
-using Microsoft.Owin;
 using HttpContext = Microsoft.Owin.IOwinContext;
 #else
 using Microsoft.AspNetCore.Http;
@@ -102,12 +101,15 @@ namespace HotChocolate.AspNetCore.Subscriptions
         public async Task PrepareRequestAsync(QueryRequest request)
         {
             var properties = new Dictionary<string, object>(RequestProperties);
+
             request.Properties = properties;
 
             if (_onCreateRequest != null)
             {
                 await _onCreateRequest(
-                    HttpContext, request, properties,
+                    HttpContext,
+                    request,
+                    properties,
                     HttpContext.GetCancellationToken());
             }
         }

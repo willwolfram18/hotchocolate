@@ -28,8 +28,6 @@ namespace HotChocolate.AspNetCore
         : RequestDelegate
 #endif
     {
-        private readonly IQueryExecuter _queryExecuter;
-
         /// <summary>
         /// Instantiates the base query middleware with an optional pointer to
         /// the next component.
@@ -53,22 +51,11 @@ namespace HotChocolate.AspNetCore
 #if !ASPNETCLASSIC
             Next = next;
 #endif
-            _queryExecuter = queryExecuter ??
+            QueryExecuter = queryExecuter ??
                 throw new ArgumentNullException(nameof(queryExecuter));
             Options = options ??
                 throw new ArgumentNullException(nameof(options));
-            Services = Executer.Schema.Services;
-        }
-
-        /// <summary>
-        /// Gets the GraphQL query executer resolver.
-        /// </summary>
-        protected IQueryExecuter Executer
-        {
-            get
-            {
-                return _queryExecuter;
-            }
+            Services = QueryExecuter.Schema.Services;
         }
 
 #if !ASPNETCLASSIC
@@ -79,6 +66,11 @@ namespace HotChocolate.AspNetCore
         /// Gets the GraphQL middleware options.
         /// </summary>
         protected QueryMiddlewareOptions Options { get; }
+
+        /// <summary>
+        /// Gets the GraphQL query executer resolver.
+        /// </summary>
+        protected IQueryExecuter QueryExecuter { get; }
 
         protected IServiceProvider Services { get; }
 
@@ -98,7 +90,7 @@ namespace HotChocolate.AspNetCore
             {
                 try
                 {
-                    await HandleRequestAsync(context, Executer)
+                    await HandleRequestAsync(context, QueryExecuter)
                         .ConfigureAwait(false);
                 }
                 catch (NotSupportedException)
@@ -108,13 +100,9 @@ namespace HotChocolate.AspNetCore
                     return;
                 }
             }
-            else if (Next != null)
+            else
             {
-#if ASPNETCLASSIC
                 await Next.Invoke(context).ConfigureAwait(false);
-#else
-                await Next(context).ConfigureAwait(false);
-#endif
             }
         }
 

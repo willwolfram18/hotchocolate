@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using HotChocolate.Execution;
 
 #if ASPNETCLASSIC
-using Microsoft.Owin;
 using HttpContext = Microsoft.Owin.IOwinContext;
 #else
 using Microsoft.AspNetCore.Http;
@@ -137,15 +136,19 @@ namespace HotChocolate.AspNetCore.Subscriptions
                 throw new ArgumentNullException(nameof(queryExecuter));
             }
 
-            WebSocket socket = await httpContext.WebSockets
-                .AcceptWebSocketAsync(_protocol);
+            WebSocket socket = await httpContext
+                .AcceptWebSocketAsync(_protocol)
+                .ConfigureAwait(false);
 
             if (httpContext.WebSockets.WebSocketRequestedProtocols
                 .Contains(socket.SubProtocol))
             {
                 var context = new WebSocketContext(
-                    httpContext, socket, queryExecuter,
-                    onConnectAsync, onCreateRequest);
+                    httpContext,
+                    socket,
+                    queryExecuter,
+                    onConnectAsync,
+                    onCreateRequest);
 
                 return new WebSocketSession(context);
             }

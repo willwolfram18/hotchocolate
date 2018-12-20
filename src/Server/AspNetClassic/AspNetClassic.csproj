@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net461</TargetFramework>
@@ -6,6 +6,7 @@
     <RootNamespace>HotChocolate.AspNetClassic</RootNamespace>
     <PackageId>HotChocolate.AspNetClassic</PackageId>
     <Description>The hot chocolate ASP.net classic GraphQL middleware.</Description>
+    <Pac
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
