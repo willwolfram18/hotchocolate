@@ -71,6 +71,7 @@ namespace HotChocolate.Execution
                     batchOperationHandler,
                     cancellationToken)
                         .ConfigureAwait(false);
+
                 // execute child fields with the default parallel flow logic
                 await ExecuteResolversAsync(
                     executionContext,
@@ -78,6 +79,7 @@ namespace HotChocolate.Execution
                     batchOperationHandler,
                     cancellationToken)
                         .ConfigureAwait(false);
+
                 nextBatch.Clear();
                 cancellationToken.ThrowIfCancellationRequested();
             }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using HotChocolate.Execution.Instrumentation;
+using HotChocolate.Utilities;
 
 namespace HotChocolate.Execution
 {
@@ -21,6 +22,8 @@ namespace HotChocolate.Execution
         /// Gets the request scope services
         /// </summary>
         IServiceProvider Services { get; }
+
+        ITypeConversion TypeConversion { get; }
 
         /// <summary>
         /// Gets the error handler which adds additional context

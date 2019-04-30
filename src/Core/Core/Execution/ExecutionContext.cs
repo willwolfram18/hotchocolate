@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using HotChocolate.Execution.Instrumentation;
+using HotChocolate.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace HotChocolate.Execution
@@ -41,9 +42,11 @@ namespace HotChocolate.Execution
             FieldHelper = new FieldHelper(
                 fieldCollector, requestContext.ResolveMiddleware,
                 AddError);
-
             Activator = new Activator(
                 requestContext.ServiceScope.ServiceProvider);
+
+            TypeConversion = _requestContext.ServiceScope
+                .ServiceProvider.GetTypeConversion();
         }
 
         public ISchema Schema { get; }
@@ -53,6 +56,8 @@ namespace HotChocolate.Execution
 
         public IServiceProvider Services =>
             ServiceScope.ServiceProvider;
+
+        public ITypeConversion TypeConversion { get; }
 
         public IErrorHandler ErrorHandler { get; }
 

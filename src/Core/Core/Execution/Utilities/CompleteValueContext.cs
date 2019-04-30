@@ -117,6 +117,7 @@ namespace HotChocolate.Execution
                     field,
                     Path.Append(field.ResponseName),
                     source,
+                    resolverResult,
                     objectResult,
                     CreateListNonNullViolationPropagation(
                         _resolverTask, SetElementNull)));
@@ -152,13 +153,13 @@ namespace HotChocolate.Execution
             else if (type is InterfaceType interfaceType)
             {
                 return interfaceType.ResolveType(
-                    _resolverTask.ResolverContext,
+                    _resolverTask,
                     resolverResult);
             }
             else if (type is UnionType unionType)
             {
                 return unionType.ResolveType(
-                    _resolverTask.ResolverContext,
+                    _resolverTask,
                     resolverResult);
             }
 

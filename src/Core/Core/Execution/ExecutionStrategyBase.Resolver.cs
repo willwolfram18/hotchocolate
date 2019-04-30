@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using HotChocolate.Resolvers;
@@ -15,7 +16,7 @@ namespace HotChocolate.Execution
            CancellationToken cancellationToken)
         {
             Activity activity = resolverTask.Diagnostics.BeginResolveField(
-                resolverTask.ResolverContext);
+                resolverTask);
             object result = null;
 
             try
@@ -27,12 +28,12 @@ namespace HotChocolate.Execution
                 if (result is IEnumerable<IError> errors)
                 {
                     resolverTask.Diagnostics.ResolverError(
-                        resolverTask.ResolverContext, errors);
+                        resolverTask, errors);
                 }
                 else if (result is IError error)
                 {
                     resolverTask.Diagnostics.ResolverError(
-                        resolverTask.ResolverContext,
+                        resolverTask,
                         new IError[] { error });
                 }
             }
@@ -40,13 +41,14 @@ namespace HotChocolate.Execution
             {
                 resolverTask.Diagnostics.EndResolveField(
                     activity,
-                    resolverTask.ResolverContext,
+                    resolverTask,
                     result);
             }
 
             return result;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static async Task<object> ExecuteMiddlewareAsync(
             ResolverTask resolverTask,
             IErrorHandler errorHandler)
@@ -83,22 +85,14 @@ namespace HotChocolate.Execution
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static async Task<object> ExecuteFieldMiddlewareAsync(
             ResolverTask resolverTask)
         {
-            var middlewareContext = new MiddlewareContext
-            (
-                resolverTask.ResolverContext,
-                () => resolverTask.FieldSelection.Field
-                    .Resolver?.Invoke(resolverTask.ResolverContext)
-                        ?? Task.FromResult<object>(null),
-                result => resolverTask.CompleteResolverResult(result)
-            );
-
-            await resolverTask.FieldDelegate.Invoke(middlewareContext)
+            await resolverTask.FieldDelegate.Invoke(resolverTask)
                 .ConfigureAwait(false);
 
-            return middlewareContext.Result;
+            return resolverTask.ResolverResult;
         }
     }
 }

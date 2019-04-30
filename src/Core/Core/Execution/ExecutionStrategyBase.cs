@@ -26,17 +26,26 @@ namespace HotChocolate.Execution
             IEnumerable<ResolverTask> rootResolverTasks =
                 CreateRootResolverTasks(executionContext,
                     executionContext.Result.Data);
+            try
+            {
+                await ExecuteResolversAsync(
+                    executionContext,
+                    rootResolverTasks,
+                    batchOperationHandler,
+                    cancellationToken)
+                        .ConfigureAwait(false);
 
-            await ExecuteResolversAsync(
-                executionContext,
-                rootResolverTasks,
-                batchOperationHandler,
-                cancellationToken)
-                    .ConfigureAwait(false);
-
-            EnsureRootValueNonNullState(
-                executionContext.Result,
-                rootResolverTasks);
+                EnsureRootValueNonNullState(
+                    executionContext.Result,
+                    rootResolverTasks);
+            }
+            finally
+            {
+                foreach (ResolverTask task in rootResolverTasks)
+                {
+                    ObjectPools.ResolverTasks.Return(task);
+                }
+            }
 
             return executionContext.Result;
         }
@@ -160,6 +169,11 @@ namespace HotChocolate.Execution
 
                 completionContext.CompleteValue(resolverTask);
 
+                if (!resolverTask.IsRootTask)
+                {
+                    ObjectPools.ResolverTasks.Return(resolverTask);
+                }
+
                 cancellationToken.ThrowIfCancellationRequested();
             }
         }
@@ -180,11 +194,12 @@ namespace HotChocolate.Execution
 
             foreach (FieldSelection fieldSelection in fieldSelections)
             {
-                tasks.Add(new ResolverTask(
-                    executionContext,
+                ResolverTask resolverTask = ObjectPools.ResolverTasks.Rent();
+                resolverTask.Initialize(executionContext,
                     fieldSelection,
                     source,
-                    result));
+                    result);
+                tasks.Add(resolverTask);
             }
 
             return tasks;

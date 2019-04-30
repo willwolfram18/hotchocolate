@@ -1,104 +1,66 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Globalization;
+using System.Threading;
 using System.Threading.Tasks;
 using HotChocolate.Execution.Instrumentation;
+using HotChocolate.Language;
 using HotChocolate.Properties;
 using HotChocolate.Resolvers;
 using HotChocolate.Types;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HotChocolate.Execution
 {
-    internal sealed class ResolverTask
+    internal sealed partial class ResolverTask
     {
-        private readonly IExecutionContext _executionContext;
-        private readonly IDictionary<string, object> _result;
-        private readonly ResolverTask _parent;
-        private readonly Action _propagateNonNullViolation;
-
-        public ResolverTask(
-            IExecutionContext executionContext,
-            FieldSelection fieldSelection,
-            IImmutableStack<object> source,
-            IDictionary<string, object> result)
-        {
-            _executionContext = executionContext;
-            Source = source;
-            ObjectType = fieldSelection.Field.DeclaringType;
-            FieldSelection = fieldSelection;
-            FieldType = fieldSelection.Field.Type;
-            Path = Path.New(fieldSelection.ResponseName);
-            _result = result;
-            ScopedContextData = ImmutableDictionary<string, object>.Empty;
-
-            ResolverContext = new ResolverContext(
-                executionContext, this,
-                executionContext.RequestAborted);
-
-            FieldDelegate = executionContext.FieldHelper
-                .CreateMiddleware(fieldSelection);
-        }
-
-        private ResolverTask(
-            ResolverTask parent,
-            FieldSelection fieldSelection,
-            Path path,
-            IImmutableStack<object> source,
-            IDictionary<string, object> result,
-            Action propagateNonNullViolation)
-        {
-            _parent = parent;
-            _executionContext = parent._executionContext;
-            Source = source;
-            ObjectType = fieldSelection.Field.DeclaringType;
-            FieldSelection = fieldSelection;
-            FieldType = fieldSelection.Field.Type;
-            Path = path;
-            _result = result;
-            ScopedContextData = parent.ScopedContextData;
-            _propagateNonNullViolation = propagateNonNullViolation;
-
-            ResolverContext = new ResolverContext(
-                parent._executionContext, this,
-                parent._executionContext.RequestAborted);
-
-            FieldDelegate = parent._executionContext.FieldHelper
-                .CreateMiddleware(fieldSelection);
-        }
+        private IExecutionContext _executionContext;
+        private IDictionary<string, object> _result;
+        private Action _propagateNonNullViolation;
+        private Dictionary<string, ArgumentValue> _arguments;
+        private bool _isResultResolved;
+        private object _resolvedResult;
 
         public ResolverTask Branch(
             FieldSelection fieldSelection,
             Path path,
             IImmutableStack<object> source,
+            object resolverResult,
             IDictionary<string, object> result,
             Action propagateNonNullViolation)
         {
-            return new ResolverTask(
+            ResolverTask branch = ObjectPools.ResolverTasks.Rent();
+            branch.Initialize(
                 this,
                 fieldSelection,
                 path,
                 source,
+                resolverResult,
                 result,
                 propagateNonNullViolation);
+            return branch;
         }
 
-        public IImmutableStack<object> Source { get; }
+        public object Parent { get; private set; }
 
-        public ObjectType ObjectType { get; }
+        public bool IsRootTask { get; private set; }
 
-        public FieldSelection FieldSelection { get; }
+        public IImmutableStack<object> Source { get; private set; }
 
-        public IType FieldType { get; }
+        public ObjectType ObjectType { get; private set; }
 
-        public Path Path { get; }
+        public FieldSelection FieldSelection { get; private set; }
 
-        public IResolverContext ResolverContext { get; }
+        public IType FieldType { get; private set; }
+
+        public Path Path { get; private set; }
 
         public Task<object> Task { get; set; }
 
         public object ResolverResult { get; set; }
 
-        public FieldDelegate FieldDelegate { get; }
+        public FieldDelegate FieldDelegate { get; private set; }
 
         public IImmutableDictionary<string, object> ScopedContextData
         {
@@ -116,19 +78,11 @@ namespace HotChocolate.Execution
 
         public void PropagateNonNullViolation()
         {
-            if (FieldSelection.Field.Type.IsNonNullType())
+            if (_propagateNonNullViolation != null)
             {
-                if (_propagateNonNullViolation != null)
-                {
-                    _propagateNonNullViolation.Invoke();
-                }
-                else if (_parent != null)
-                {
-                    _parent.PropagateNonNullViolation();
-                }
+                _propagateNonNullViolation.Invoke();
             }
-
-            SetResult(null);
+            _result[FieldSelection.ResponseName] = null;
         }
 
         public void SetResult(object value)
