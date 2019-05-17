@@ -115,6 +115,25 @@ namespace HotChocolate
             return null;
         }
 
+        public static string GetDeprecationReason(
+            this ICustomAttributeProvider attributeProvider)
+        {
+            if (attributeProvider.IsDefined(
+                typeof(ObsoleteAttribute),
+                false))
+            {
+                ObsoleteAttribute attribute =
+                    attributeProvider.GetCustomAttributes(
+                            typeof(ObsoleteAttribute),
+                            false)
+                        .OfType<ObsoleteAttribute>()
+                        .FirstOrDefault();
+                return attribute?.Message;
+            }
+
+            return null;
+        }
+
         private static string GetFromType(Type type)
         {
             if (type.GetTypeInfo().IsGenericType)

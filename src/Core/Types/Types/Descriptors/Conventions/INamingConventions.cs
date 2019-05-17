@@ -14,7 +14,10 @@ namespace HotChocolate.Types.Descriptors
         NameString GetMemberName(MemberInfo member, MemberKind kind);
 
         string GetMemberDescription(MemberInfo member, MemberKind kind);
+        
+        string GetDeprecationReason(MemberInfo member);
 
+        
         NameString GetArgumentName(ParameterInfo parameter);
 
         string GetArgumentDescription(ParameterInfo parameter);
@@ -22,5 +25,6 @@ namespace HotChocolate.Types.Descriptors
         NameString GetEnumValueName(object value);
 
         string GetEnumValueDescription(object value);
+
     }
 }

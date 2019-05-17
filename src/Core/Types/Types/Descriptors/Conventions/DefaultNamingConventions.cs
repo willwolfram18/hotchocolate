@@ -109,6 +109,16 @@ namespace HotChocolate.Types.Descriptors
             return description;
         }
 
+        public virtual string GetDeprecationReason(MemberInfo member)
+        {
+            if (member == null)
+            {
+                throw new ArgumentNullException(nameof(member));
+            }
+
+            return member.GetDeprecationReason();
+        }
+
         public virtual NameString GetTypeName(Type type)
         {
             if (type == null)
