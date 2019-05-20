@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -268,6 +270,39 @@ namespace HotChocolate.Types.Descriptors
 
             // assert
             Assert.Equal("I am a test class.", summary);
+        }
+
+        [Fact]
+        public void When_enum_has_summary_then_it_is_converted()
+        {
+            var documentationProvider = new XmlDocumentationProvider(
+                new XmlDocumentationFileResolver()
+            );
+
+            var summary = documentationProvider.GetSummary(
+                typeof(EnumWithXmlDocumentation)
+            );
+
+            Assert.Equal("The enum's type description.", summary);
+        }
+
+        [Theory]
+        [InlineData(EnumWithXmlDocumentation.Foo, "A foo value.")]
+        [InlineData(EnumWithXmlDocumentation.Bar, "A bar value.")]
+        [InlineData(EnumWithXmlDocumentation.Baz, "A baz value.")]
+        public void When_enum_value_has_summary_then_it_is_converted(EnumWithXmlDocumentation value, string expectedSummary)
+        {
+            var documentationProvider = new XmlDocumentationProvider(
+                new XmlDocumentationFileResolver()
+            );
+
+            var summary = documentationProvider.GetSummary(
+                typeof(EnumWithXmlDocumentation)
+                    .GetMember(value.ToString())
+                    .Single()
+            );
+
+            Assert.Equal(expectedSummary, summary);
         }
     }
 }
