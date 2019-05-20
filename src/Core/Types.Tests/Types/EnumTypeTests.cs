@@ -147,6 +147,42 @@ namespace HotChocolate.Types
         }
 
         [Fact]
+        public void ImplicityEnumType_DetectEnumDescriptions()
+        {
+            var schema = Schema.Create(c =>
+            {
+                c.RegisterType(typeof(EnumType<FooWithDescriptionAttributes>));
+                c.Options.StrictValidation = false;
+            });
+
+            EnumType type = schema.GetType<EnumType>(nameof(FooWithDescriptionAttributes));
+
+            Assert.NotNull(type);
+            Assert.Equal(EnumDescription, type.Description);
+
+            AssertEnumValueDescriptionIsCorrect(
+                FooWithDescriptionAttributes.Bar
+                    .ToString()
+                    .ToUpperInvariant(),
+                BarDescription
+            );
+            AssertEnumValueDescriptionIsCorrect(
+                FooWithDescriptionAttributes.Baz
+                    .ToString()
+                    .ToUpperInvariant(),
+                BazDescription
+            );
+
+            void AssertEnumValueDescriptionIsCorrect(string enumName, string expectedDescription)
+            {
+                EnumValue value = type.Values.SingleOrDefault(v => v.Name == enumName);
+
+                Assert.NotNull(value);
+                Assert.Equal(expectedDescription, value.Description);
+            }
+        }
+
+        [Fact]
         public void ExplicitEnumType_OnlyContainDeclaredValues()
         {
             // act
@@ -435,6 +471,19 @@ namespace HotChocolate.Types
         {
             Bar1,
             Bar2
+        }
+
+        private const string EnumDescription = "The enum type's description.";
+        private const string BarDescription = "The bar value's description";
+        private const string BazDescription = "The baz value's description";
+
+        [GraphQLDescription(EnumDescription)]
+        public enum FooWithDescriptionAttributes
+        {
+            [GraphQLDescription(BarDescription)]
+            Bar,
+            [GraphQLDescription(BazDescription)]
+            Baz
         }
 
         public class Bar { }
