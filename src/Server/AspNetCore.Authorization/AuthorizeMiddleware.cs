@@ -34,6 +34,9 @@ namespace HotChocolate.AspNetCore.Authorization
             ClaimsPrincipal principal = null;
             var allowed = false;
 
+            // ClaimsPrincipal key uses old user value;
+            // using HttpContext.User (with HttpContext key)
+            // gets you the correct user.
             if (context.ContextData.TryGetValue(
                 nameof(ClaimsPrincipal), out var o)
                 && o is ClaimsPrincipal p)
