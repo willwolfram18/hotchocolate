@@ -7,7 +7,7 @@ namespace HotChocolate.AspNetCore.Subscriptions
     internal class HttpContextMock
         : IHttpContext
     {
-        public object User { get; set; }
+        public ClaimsPrincipal User { get; set; }
 
         public CancellationToken RequestAborted { get; }
 
