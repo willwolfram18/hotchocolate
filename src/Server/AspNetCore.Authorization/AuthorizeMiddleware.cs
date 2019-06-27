@@ -35,6 +35,8 @@ namespace HotChocolate.AspNetCore.Authorization
             ClaimsPrincipal principal = null;
             var allowed = false;
 
+            // Both the ClaimsPrincipal and HttpContext keys
+            // are missing the updated User.
             if (context.ContextData.TryGetValue(
                 nameof(ClaimsPrincipal), out var o)
                 && o is ClaimsPrincipal p)
