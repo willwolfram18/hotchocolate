@@ -14,6 +14,9 @@ namespace StarWars.Types
     {
         protected override void Configure(IObjectTypeDescriptor<Query> descriptor)
         {
+            // Enforce basic authorization on the query type.
+            descriptor.Directive<AuthorizeDirective>();
+            
             descriptor.Field(t => t.GetHero(default))
                 .Type<CharacterType>()
                 .Argument("episode", a => a.DefaultValue(Episode.NewHope));

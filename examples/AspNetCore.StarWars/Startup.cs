@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Security.Principal;
 using System.Threading.Tasks;
 using HotChocolate;
 using HotChocolate.AspNetCore;
@@ -15,6 +16,13 @@ namespace StarWars
 {
     public class Startup
     {
+        public Startup(IHostingEnvironment environment)
+        {
+            Environment = environment;
+        }
+        
+        public IHostingEnvironment Environment { get; }
+        
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
@@ -67,7 +75,23 @@ namespace StarWars
 
             app
                 .UseWebSockets()
-                .UseGraphQL("/graphql")
+                .UseGraphQL(new QueryMiddlewareOptions
+                {
+                    Path = "/graphql",
+                    OnCreateRequest = (c, r, p) =>
+                    {
+                        // Normally would include a Environment.IsDevelopment() here as well.
+                        if (c.User is IPrincipal user &&
+                            !user.Identity.IsAuthenticated)
+                        {
+                            // Overwrite the context's user with one that is authenticated
+                            // for local development.
+                            var claimsIdentity = new ClaimsIdentity("LocalDevelopment");
+                            c.User = new ClaimsPrincipal(claimsIdentity);
+                        }
+                        return Task.CompletedTask;
+                    }
+                })
                 .UseGraphiQL("/graphql")
                 .UsePlayground("/graphql")
                 .UseVoyager("/graphql");
