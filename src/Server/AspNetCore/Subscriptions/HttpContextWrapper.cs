@@ -25,9 +25,20 @@ namespace HotChocolate.AspNetCore.Subscriptions
         {
             get
             {
+#if ASPNETCLASSIC
+                return _context.Authentication.User;
+#else
                 return _context.User;
+#endif
             } 
-            set => _context.User = value;
+            set
+            {
+#if ASPNETCLASSIC
+                _context.Authentication.User = value;
+#else
+                _context.User = value;
+#endif
+            }
         }
 
         public CancellationToken RequestAborted =>
